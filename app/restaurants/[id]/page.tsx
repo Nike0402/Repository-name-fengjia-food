@@ -1,14 +1,36 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 type Restaurant = {
-  id: string; name: string; category: string; description: string | null; address: string; phone: string | null;
-  latitude: number | null; longitude: number | null; rating: number | null; priceRange: string | null; imageUrl: string | null;
-  websiteUrl: string | null; menuUrl: string | null; orderUrl: string | null; googleMapsUrl: string | null;
+  id: string;
+  name: string;
+  category: string;
+  description: string | null;
+  address: string;
+  phone: string | null;
+  rating: number | null;
+  priceRange: string | null;
+  imageUrl: string | null;
+  websiteUrl: string | null;
+  menuUrl: string | null;
+  orderUrl: string | null;
+  googleMapsUrl: string | null;
 };
-const labels: Record<string, string> = { RICE: "飯", NOODLE: "麵", JAPANESE: "日式", THAI: "泰式", KOREAN: "韓式", HOTPOT: "火鍋", DESSERT: "甜點", DRINK: "飲品", OTHER: "其他" };
+
+const categoryLabels: Record<string, string> = {
+  RICE: "飯",
+  NOODLE: "麵",
+  JAPANESE: "日式",
+  THAI: "泰式",
+  KOREAN: "韓式",
+  HOTPOT: "火鍋",
+  DESSERT: "甜點",
+  DRINK: "飲品",
+  OTHER: "其他",
+};
 
 const categoryImages: Record<string, string> = {
   RICE: "https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=1200&q=85",
@@ -23,10 +45,85 @@ const categoryImages: Record<string, string> = {
 };
 
 export default function RestaurantDetail({ params }: { params: Promise<{ id: string }> }) {
+  const router = useRouter();
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  useEffect(() => { params.then(({ id }) => fetch(`/api/restaurants/${id}`).then(async (response) => { if (!response.ok) throw new Error("找不到這間餐廳"); return response.json() as Promise<{ data: Restaurant }>; }).then((payload) => setRestaurant(payload.data)).catch((requestError: Error) => setError(requestError.message))); }, [params]);
-  if (error) return <main className="detail-shell"><div className="detail-container"><Link className="back-link" href="/">← 返回餐廳列表</Link><p className="feedback error-message">{error}</p></div></main>;
-  if (!restaurant) return <main className="detail-shell"><div className="detail-container"><p className="feedback">正在載入餐廳資料...</p></div></main>;
-  return <main className="detail-shell"><div className="detail-container"><Link className="back-link" href="/">← 返回餐廳列表</Link><div className="detail-hero"><div className="detail-image" style={{ backgroundImage: `url(${restaurant.imageUrl ?? categoryImages[restaurant.category]})` }} /><div className="detail-copy"><p className="kicker">{labels[restaurant.category] ?? restaurant.category} / FENGJIA</p><h1>{restaurant.name}</h1><p className="detail-description">{restaurant.description ?? "逢甲商圈值得收藏的用餐選擇。"}</p><div className="detail-rating"><strong>★ {restaurant.rating?.toFixed(1) ?? "—"}</strong><span>價位 {restaurant.priceRange ?? "—"}</span></div></div></div><section className="info-grid"><div><span>地址</span><p>{restaurant.address}</p></div><div><span>電話</span><p>{restaurant.phone ? <a href={`tel:${restaurant.phone}`}>{restaurant.phone}</a> : "尚未提供"}</p></div></section><div className="detail-actions">{restaurant.menuUrl && <a className="primary-link" href={restaurant.menuUrl} target="_blank" rel="noreferrer">查看菜單</a>}{restaurant.orderUrl && <a href={restaurant.orderUrl} target="_blank" rel="noreferrer">線上訂餐</a>}{restaurant.websiteUrl && <a href={restaurant.websiteUrl} target="_blank" rel="noreferrer">官方網站</a>}</div></div></main>;
+  const [randomLoading, setRandomLoading] = useState(false);
+  const [randomError, setRandomError] = useState("");
+
+  useEffect(() => {
+    const controller = new AbortController();
+    params
+      .then(({ id }) => fetch(`/api/restaurants/${id}`, { signal: controller.signal }))
+      .then(async (response) => {
+        const payload = await response.json() as { data?: Restaurant; error?: string };
+        if (response.status === 404) throw new Error("找不到這間餐廳");
+        if (!response.ok || !payload.data) throw new Error(payload.error ?? "餐廳資料載入失敗，請稍後再試");
+        setRestaurant(payload.data);
+      })
+      .catch((requestError: Error) => {
+        if (requestError.name !== "AbortError") setError(requestError.message);
+      })
+      .finally(() => setLoading(false));
+
+    return () => controller.abort();
+  }, [params]);
+
+  async function showRandomRestaurant() {
+    if (randomLoading) return;
+    setRandomLoading(true);
+    setRandomError("");
+    try {
+      const response = await fetch("/api/restaurants/random");
+      const payload = await response.json() as { data?: Restaurant };
+      if (!response.ok || !payload.data) throw new Error("推薦失敗，請再試一次");
+      router.push(`/restaurant/${payload.data.id}`);
+    } catch {
+      setRandomError("推薦失敗，請再試一次");
+    } finally {
+      setRandomLoading(false);
+    }
+  }
+
+  if (loading) {
+    return <main className="detail-shell"><div className="detail-container"><Link className="back-link" href="/">← 回到餐廳列表</Link><p className="feedback">正在載入餐廳資料...</p></div></main>;
+  }
+
+  if (error || !restaurant) {
+    return <main className="detail-shell"><div className="detail-container"><Link className="back-link" href="/">← 回到餐廳列表</Link><p className="feedback error-message">{error || "找不到這間餐廳"}</p></div></main>;
+  }
+
+  const imageUrl = restaurant.imageUrl ?? categoryImages[restaurant.category];
+
+  return (
+    <main className="detail-shell">
+      <div className="detail-container">
+        <Link className="back-link" href="/">← 回到餐廳列表</Link>
+        <div className="detail-hero">
+          <div className="detail-image" style={imageUrl ? { backgroundImage: `url(${imageUrl})` } : undefined} aria-label={`${restaurant.name} 餐廳圖片`} />
+          <div className="detail-copy">
+            <p className="kicker">{categoryLabels[restaurant.category] ?? restaurant.category} / FENGJIA</p>
+            <h1>{restaurant.name}</h1>
+            {restaurant.description && <p className="detail-description">{restaurant.description}</p>}
+            <div className="detail-rating"><strong>★ {restaurant.rating?.toFixed(1) ?? "—"}</strong><span>價位 {restaurant.priceRange ?? "—"}</span></div>
+          </div>
+        </div>
+
+        <section className="info-grid">
+          <div><span>地址</span><p>{restaurant.address}</p>{restaurant.googleMapsUrl && <a className="inline-action" href={restaurant.googleMapsUrl} target="_blank" rel="noreferrer">📍 Google Maps 導航</a>}</div>
+          <div><span>電話</span><p>{restaurant.phone ? <a href={`tel:${restaurant.phone}`}>{restaurant.phone}</a> : "尚未提供"}</p></div>
+        </section>
+
+        <div className="detail-actions">
+          {restaurant.menuUrl && <a className="primary-link" href={restaurant.menuUrl} target="_blank" rel="noreferrer">📖 查看菜單</a>}
+          {restaurant.orderUrl && <a href={restaurant.orderUrl} target="_blank" rel="noreferrer">🛵 線上訂餐</a>}
+          {restaurant.websiteUrl && <a href={restaurant.websiteUrl} target="_blank" rel="noreferrer">🌐 官方網站</a>}
+        </div>
+
+        {randomError && <p className="feedback error-message">{randomError}</p>}
+        <div className="detail-footer-action"><button className="random-button" type="button" onClick={showRandomRestaurant} disabled={randomLoading}>{randomLoading ? "🎲 挑選中..." : "🎲 今天吃什麼？"}</button></div>
+      </div>
+    </main>
+  );
 }
