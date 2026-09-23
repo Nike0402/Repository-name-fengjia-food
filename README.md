@@ -54,9 +54,20 @@ copy .env.example .env.local
 
 ```env
 DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DATABASE?schema=public"
+GOOGLE_MAPS_API_KEY="your-google-places-api-key"
 ```
 
 請勿將 `.env.local`、密碼、Token、API Key 或其他秘密資訊提交到 GitHub。`.gitignore` 已忽略 `.env*`，只有 `.env.example` 可提交。
+
+Google Maps 星等與價位
+
+在 Google Cloud 啟用 Places API (New)，建立 API key 後填入 `.env.local` 的 `GOOGLE_MAPS_API_KEY`，再執行：
+
+```bash
+npm run db:sync-google
+```
+
+同步程式會依餐廳名稱與地址查詢 Google Places，將星等與價格級別寫入資料庫，網站會直接顯示同步後的資料。
 
 ## Database 設定
 

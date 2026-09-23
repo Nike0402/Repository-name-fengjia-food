@@ -110,7 +110,7 @@ export default function RestaurantDetail({ params }: { params: Promise<{ id: str
             <p className="kicker">{categoryLabels[restaurant.category] ?? restaurant.category} / FENGJIA</p>
             <h1>{restaurant.name}</h1>
             {restaurant.description && <p className="detail-description">{restaurant.description}</p>}
-            <div className="detail-rating"><strong>{restaurant.rating !== null ? `Google 星等 ★ ${restaurant.rating.toFixed(1)}` : "Google 星等 尚未提供"}</strong><span>{hasValue(restaurant.priceRange) ? `價位 ${restaurant.priceRange}` : "價位 尚未提供"}</span></div>
+            <div className="detail-rating">{restaurant.rating !== null && <strong>⭐ {restaurant.rating.toFixed(1)}</strong>}{hasValue(restaurant.priceRange) && <span>💰 {restaurant.priceRange}</span>}</div>
           </div>
         </div>
 
