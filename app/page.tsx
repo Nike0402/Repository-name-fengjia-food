@@ -20,6 +20,18 @@ function getGoogleMapsUrl(restaurant: Restaurant) {
   return restaurant.googleMapsUrl ?? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${restaurant.name} ${restaurant.address}`)}`;
 }
 
+const categoryImages: Record<string, string> = {
+  RICE: "https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=1200&q=85",
+  NOODLE: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=1200&q=85",
+  JAPANESE: "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=1200&q=85",
+  THAI: "https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?auto=format&fit=crop&w=1200&q=85",
+  KOREAN: "https://images.unsplash.com/photo-1498654896293-37aacf113fd9?auto=format&fit=crop&w=1200&q=85",
+  HOTPOT: "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=1200&q=85",
+  DESSERT: "https://images.unsplash.com/photo-1551024506-0bccd828d307?auto=format&fit=crop&w=1200&q=85",
+  DRINK: "https://images.unsplash.com/photo-1544145945-f90425340c7e?auto=format&fit=crop&w=1200&q=85",
+  OTHER: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=85",
+};
+
 export default function Home() {
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [category, setCategory] = useState<Category>("all");
@@ -91,7 +103,7 @@ function RandomRecommendation({ restaurant }: { restaurant: Restaurant }) {
 
 function RestaurantCard({ restaurant }: { restaurant: Restaurant }) {
   return <article className="restaurant-card">
-    <div className="card-image" style={restaurant.imageUrl ? { backgroundImage: `url(${restaurant.imageUrl})` } : undefined}>{!restaurant.imageUrl && <span>{restaurant.name.slice(0, 1)}</span>}<span className="category-badge">{categoryLabels[restaurant.category] ?? restaurant.category}</span></div>
+    <div className="card-image" style={{ backgroundImage: `url(${restaurant.imageUrl ?? categoryImages[restaurant.category]})` }}><span className="category-badge">{categoryLabels[restaurant.category] ?? restaurant.category}</span></div>
     <div className="card-content"><div className="card-title-row"><h3>{restaurant.name}</h3><span className="rating">★ {restaurant.rating?.toFixed(1) ?? "—"}</span></div>
       <p className="card-description">{restaurant.description ?? "逛逢甲時，值得收藏的用餐選擇。"}</p><div className="card-meta"><span>⌖ {restaurant.address}</span><span>價位 {restaurant.priceRange ?? "—"}</span></div>
       <div className="card-actions"><Link className="primary-link" href={`/restaurants/${restaurant.id}`}>查看詳細 <span>↗</span></Link><a href={getGoogleMapsUrl(restaurant)} target="_blank" rel="noreferrer">Google Maps</a>{restaurant.menuUrl && <a href={restaurant.menuUrl} target="_blank" rel="noreferrer">菜單</a>}{restaurant.orderUrl && <a href={restaurant.orderUrl} target="_blank" rel="noreferrer">訂餐</a>}{restaurant.phone && <a href={`tel:${restaurant.phone}`}>電話</a>}</div>
