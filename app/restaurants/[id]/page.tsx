@@ -44,6 +44,10 @@ const categoryImages: Record<string, string> = {
   OTHER: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=85",
 };
 
+function hasValue(value: string | null | undefined): value is string {
+  return Boolean(value?.trim());
+}
+
 export default function RestaurantDetail({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
@@ -94,7 +98,7 @@ export default function RestaurantDetail({ params }: { params: Promise<{ id: str
     return <main className="detail-shell"><div className="detail-container"><Link className="back-link" href="/">← 回到餐廳列表</Link><p className="feedback error-message">{error || "找不到這間餐廳"}</p></div></main>;
   }
 
-  const imageUrl = restaurant.imageUrl ?? categoryImages[restaurant.category];
+  const imageUrl = hasValue(restaurant.imageUrl) ? restaurant.imageUrl : categoryImages[restaurant.category];
 
   return (
     <main className="detail-shell">
@@ -106,19 +110,19 @@ export default function RestaurantDetail({ params }: { params: Promise<{ id: str
             <p className="kicker">{categoryLabels[restaurant.category] ?? restaurant.category} / FENGJIA</p>
             <h1>{restaurant.name}</h1>
             {restaurant.description && <p className="detail-description">{restaurant.description}</p>}
-            <div className="detail-rating"><strong>★ {restaurant.rating?.toFixed(1) ?? "—"}</strong><span>價位 {restaurant.priceRange ?? "—"}</span></div>
+            <div className="detail-rating"><strong>{restaurant.rating !== null ? `Google 星等 ★ ${restaurant.rating.toFixed(1)}` : "Google 星等 尚未提供"}</strong><span>{hasValue(restaurant.priceRange) ? `價位 ${restaurant.priceRange}` : "價位 尚未提供"}</span></div>
           </div>
         </div>
 
-        <section className="info-grid">
-          <div><span>地址</span><p>{restaurant.address}</p>{restaurant.googleMapsUrl && <a className="inline-action" href={restaurant.googleMapsUrl} target="_blank" rel="noreferrer">📍 Google Maps 導航</a>}</div>
-          <div><span>電話</span><p>{restaurant.phone ? <a href={`tel:${restaurant.phone}`}>{restaurant.phone}</a> : "尚未提供"}</p></div>
-        </section>
+        {(hasValue(restaurant.address) || hasValue(restaurant.phone)) && <section className="info-grid">
+          {hasValue(restaurant.address) && <div><span>地址</span><p>{restaurant.address}</p>{hasValue(restaurant.googleMapsUrl) && <a className="inline-action" href={restaurant.googleMapsUrl} target="_blank" rel="noreferrer">📍 Google Maps 導航</a>}</div>}
+          {hasValue(restaurant.phone) && <div><span>電話</span><p><a href={`tel:${restaurant.phone}`}>{restaurant.phone}</a></p></div>}
+        </section>}
 
         <div className="detail-actions">
-          {restaurant.menuUrl && <a className="primary-link" href={restaurant.menuUrl} target="_blank" rel="noreferrer">📖 查看菜單</a>}
-          {restaurant.orderUrl && <a href={restaurant.orderUrl} target="_blank" rel="noreferrer">🛵 線上訂餐</a>}
-          {restaurant.websiteUrl && <a href={restaurant.websiteUrl} target="_blank" rel="noreferrer">🌐 官方網站</a>}
+          {hasValue(restaurant.menuUrl) && <a className="primary-link" href={restaurant.menuUrl} target="_blank" rel="noreferrer">📖 查看菜單</a>}
+          {hasValue(restaurant.orderUrl) && <a href={restaurant.orderUrl} target="_blank" rel="noreferrer">🛵 線上訂餐</a>}
+          {hasValue(restaurant.websiteUrl) && <a href={restaurant.websiteUrl} target="_blank" rel="noreferrer">🌐 官方網站</a>}
         </div>
 
         {randomError && <p className="feedback error-message">{randomError}</p>}

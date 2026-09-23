@@ -8,13 +8,15 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const category = searchParams.get("category")?.toLowerCase();
     const search = searchParams.get("search")?.trim();
+    const sort = searchParams.get("sort")?.toLowerCase() ?? "rating";
     if (category && !categoryValues.has(category)) return Response.json({ error: "無效的餐廳分類" }, { status: 400 });
+    if (sort !== "rating" && sort !== "name") return Response.json({ error: "無效的排序方式" }, { status: 400 });
     const restaurants = await prisma.restaurant.findMany({
       where: {
         ...(category && { category: category.toUpperCase() as RestaurantCategory }),
         ...(search && { OR: [{ name: { contains: search, mode: "insensitive" } }, { description: { contains: search, mode: "insensitive" } }, { address: { contains: search, mode: "insensitive" } }] }),
       },
-      orderBy: [{ rating: "desc" }, { name: "asc" }],
+      orderBy: sort === "rating" ? [{ rating: "desc" }, { name: "asc" }] : [{ name: "asc" }],
     });
     return Response.json({ data: restaurants });
   } catch (error) {
