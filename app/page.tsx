@@ -16,6 +16,10 @@ const categories: { label: string; value: Category }[] = [
 ];
 const categoryLabels: Record<string, string> = { RICE: "飯", NOODLE: "麵", JAPANESE: "日式", THAI: "泰式", KOREAN: "韓式", HOTPOT: "火鍋", DESSERT: "甜點", DRINK: "飲品", OTHER: "其他" };
 
+function getGoogleMapsUrl(restaurant: Restaurant) {
+  return restaurant.googleMapsUrl ?? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${restaurant.name} ${restaurant.address}`)}`;
+}
+
 export default function Home() {
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [category, setCategory] = useState<Category>("all");
@@ -90,7 +94,7 @@ function RestaurantCard({ restaurant }: { restaurant: Restaurant }) {
     <div className="card-image" style={restaurant.imageUrl ? { backgroundImage: `url(${restaurant.imageUrl})` } : undefined}>{!restaurant.imageUrl && <span>{restaurant.name.slice(0, 1)}</span>}<span className="category-badge">{categoryLabels[restaurant.category] ?? restaurant.category}</span></div>
     <div className="card-content"><div className="card-title-row"><h3>{restaurant.name}</h3><span className="rating">★ {restaurant.rating?.toFixed(1) ?? "—"}</span></div>
       <p className="card-description">{restaurant.description ?? "逛逢甲時，值得收藏的用餐選擇。"}</p><div className="card-meta"><span>⌖ {restaurant.address}</span><span>價位 {restaurant.priceRange ?? "—"}</span></div>
-      <div className="card-actions"><Link className="primary-link" href={`/restaurants/${restaurant.id}`}>查看詳細 <span>↗</span></Link>{restaurant.googleMapsUrl && <a href={restaurant.googleMapsUrl} target="_blank" rel="noreferrer">地圖</a>}{restaurant.menuUrl && <a href={restaurant.menuUrl} target="_blank" rel="noreferrer">菜單</a>}{restaurant.orderUrl && <a href={restaurant.orderUrl} target="_blank" rel="noreferrer">訂餐</a>}{restaurant.phone && <a href={`tel:${restaurant.phone}`}>電話</a>}</div>
+      <div className="card-actions"><Link className="primary-link" href={`/restaurants/${restaurant.id}`}>查看詳細 <span>↗</span></Link><a href={getGoogleMapsUrl(restaurant)} target="_blank" rel="noreferrer">Google Maps</a>{restaurant.menuUrl && <a href={restaurant.menuUrl} target="_blank" rel="noreferrer">菜單</a>}{restaurant.orderUrl && <a href={restaurant.orderUrl} target="_blank" rel="noreferrer">訂餐</a>}{restaurant.phone && <a href={`tel:${restaurant.phone}`}>電話</a>}</div>
     </div>
   </article>;
 }
